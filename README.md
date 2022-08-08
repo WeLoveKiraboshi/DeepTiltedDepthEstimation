@@ -81,9 +81,9 @@ There is several optional parameters for evaluation in command line.
 alt="OurBaseline" width="965" height="420" border="0" /></a>
 
 <a href="http://hvrl.ics.keio.ac.jp/saito_y/images/TiltedDepthEstimation/Qualitative_OurDataset_OtherBaselines_v3-1.png" target="_blank"><img src="http://hvrl.ics.keio.ac.jp/saito_y/images/TiltedDepthEstimation/Qualitative_OurDataset_OtherBaselines_v3-1.png"
-alt="OtherBaseline" width="965" height="420" border="0" /></a>
+alt="OtherBaseline" width="965" height="430" border="0" /></a>
 
 
-## Dense Reconstruction Demo
-<a href="http://hvrl.ics.keio.ac.jp/saito_y/images/IW-FCV/DenseReconstruction.png" target="_blank"><img src="http://hvrl.ics.keio.ac.jp/saito_y/images/IW-FCV/DenseReconstruction.png"
-alt="CNN-MonoFusion-Demo" width="648" height="512" border="30" /></a>
+## Extension to SLAM applications
+<a href="http://hvrl.ics.keio.ac.jp/saito_y/images/TiltedDepthEstimation/Extension_to_SLAM.png" target="_blank"><img src="http://hvrl.ics.keio.ac.jp/saito_y/images/TiltedDepthEstimation/Extension_to_SLAM.png"
+alt="SLAM-Demo" width="1024" height="402" border="0" /></a>

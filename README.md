@@ -5,7 +5,7 @@
 This is a repository of Paper: "Monocular Depth Estimation for Tilted Images via Gravity Rectifier".
 
 <a href="http://hvrl.ics.keio.ac.jp/saito_y/images/IW-FCV/system_overview.png" target="_blank"><img src="https://user-images.githubusercontent.com/52692327/183321849-1bf5794c-fdd4-4c4e-8f82-36d5b94aaa25.gif" 
-alt="TeaserVideo" width="526" height="132" border="0" /></a>
+alt="TeaserVideo" width="789" height="198" border="0" /></a>
 
 
 
@@ -81,7 +81,7 @@ There is several optional parameters for evaluation in command line.
 alt="OurBaseline" width="965" height="420" border="0" /></a>
 
 <a href="http://hvrl.ics.keio.ac.jp/saito_y/images/TiltedDepthEstimation/Qualitative_OurDataset_OtherBaselines_v3-1.png" target="_blank"><img src="http://hvrl.ics.keio.ac.jp/saito_y/images/TiltedDepthEstimation/Qualitative_OurDataset_OtherBaselines_v3-1.png"
-alt="OtherBaseline" width="965" height="400" border="0" /></a>
+alt="OtherBaseline" width="965" height="420" border="0" /></a>
 
 
 ## Dense Reconstruction Demo

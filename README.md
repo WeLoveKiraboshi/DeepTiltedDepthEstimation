@@ -78,7 +78,7 @@ There is several optional parameters for evaluation in command line.
 ## Monocular Depth Estimation Module
 
 <a href="http://hvrl.ics.keio.ac.jp/saito_y/images/TiltedDepthEstimation/Qualitative_OurDataset_OurBaselines_v3-1.png" target="_blank"><img src="http://hvrl.ics.keio.ac.jp/saito_y/images/TiltedDepthEstimation/Qualitative_OurDataset_OurBaselines_v3-1.png"
-alt="OurBaseline" width="965" height="453" border="0" /></a>
+alt="OurBaseline" width="965" height="420" border="0" /></a>
 
 
 

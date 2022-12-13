@@ -1,0 +1,35 @@
+seed: 1
+mode: 'sr_depth_net'
+network: 'SpatialRectifierResnetUnetPartialConv_v2'
+pre_train: False
+bs: 16
+lr: 5.e-5
+epochs: 30
+shuffle: True
+augment: False
+
+save_model_interval: 3000
+tb_log_interval: 100
+imsize: [240, 320]
+loss: 'SRDenseDepthFullLoss'
+input_augmentation: 'no_warp' #'random_warp_input'
+image_padding_mode: 'zeros'
+
+# if you wanna train from scratch, please set off this key: init_train
+sr_checkpoint_path: '/home/yukisaito/TiltedDepthEstimation/results/sr_only/models/iter_12000_full2dofa.pkl'
+checkpoint_path: '/home/yukisaito/TiltedDepthEstimation/results/resnetunet_pconv_v2/models/iter_198000_standard.pkl'
+init_train: True
+full_checkpoint_path: '/home/yukisaito/TiltedDepthEstimation/results/sr_resnetunet_pconv_v2_full/models/model-best-scannet_full_standard_roll:1.0_20220629_Ours.pkl'
+
+#model-best-scannet_full_standard_pitch:1.0_20220629_Ours.pkl'
+#model-best-scannet_full_standard_roll:1.0_20220629_Ours.pkl'
+
+
+#model-best-gravity_aligned_standard.pkl'
+# '/home/yukisaito/TiltedDepthEstimation/results/sr_resnetunet_pconv_v2_full/models/sr=12000_full2dofa-net=198000-lr=5e-5-epoch=30-model-best_standard.pkl'
+#model-best-scannet_full_standard_pitch:1.0_20220629_Ours.pkl'
+
+
+dataset: 'scannet'
+train_dataset: './data/my_scannet_standard_train_test_val_split.pkl' #'./data/my_full_2dofa_scannet.pkl'
+test_dataset: './data/my_scannet_standard_train_test_val_split.pkl'

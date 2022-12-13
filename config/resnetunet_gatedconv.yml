@@ -1,0 +1,25 @@
+seed: 1
+mode: 'depth_net'
+network: 'ResnetUnetGatedConv'
+pre_train: False
+bs: 16
+lr: 1.e-4
+epochs: 50
+shuffle: True
+augment: False
+
+save_model_interval: 5000
+tb_log_interval: 1000
+imsize: [240, 320]
+loss: 'DenseDepthLoss'
+input_augmentation: 'warp_input'
+
+# if you wanna train from scratch, please set off this key: init_train
+sr_checkpoint_path:
+checkpoint_path: '/home/yukisaito/TiltedDepthEstimation/results/resnetunet_gatedconv/models/model-best-warp_standard.pkl'
+start_epochs: 0
+init_train: True
+
+dataset: 'scannet'  #TUMrgbd_frei2rpy #'scannet'
+train_dataset: './data/my_scannet_standard_train_test_val_split.pkl'
+test_dataset: './data/my_scannet_standard_train_test_val_split.pkl'

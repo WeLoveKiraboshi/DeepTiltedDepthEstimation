@@ -1,0 +1,30 @@
+seed: 1
+mode: 'depth_net'
+network: 'ResnetUnet'
+pre_train: False
+bs: 16
+lr: 1.e-4
+epochs: 50
+shuffle: True
+augment: False
+
+save_model_interval: 1000
+tb_log_interval: 100
+imsize: [240, 320]
+loss: 'DenseDepthLoss'
+input_augmentation: 'no_warp' #'random_warp_input' #'warp_input'
+
+
+# if you wanna train from scratch, please set off this key: init_train
+sr_checkpoint_path: #'/home/yukisaito/TiltedDepthEstimation/results/sr_only/models/iter_58000.p'
+checkpoint_path: '/home/yukisaito/TiltedDepthEstimation/results/resnetunet/models/model-best-no_warp-meter-standard.pkl'
+#'/home/yukisaito/TiltedDepthEstimation/results/resnetunet/models/model-best-40epochs-no-warp.pkl'
+#iter_501000-warp.pkl #iter_294000-warp.pkl'
+#'/home/yukisaito/TiltedDepthEstimation/results/resnetunet/models/model-best-random_warp.pkl'
+init_train: False
+start_epochs: 20
+
+
+dataset: 'scannet' #TUMrgbd_frei3rpy
+train_dataset: './data/my_scannet_standard_train_test_val_split.pkl'
+test_dataset: './data/my_scannet_standard_train_test_val_split.pkl'

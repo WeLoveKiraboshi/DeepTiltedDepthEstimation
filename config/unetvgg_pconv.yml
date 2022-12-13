@@ -1,0 +1,24 @@
+seed: 1
+mode: 'depth_net'
+network: 'UnetVGGPartialConv'
+pre_train: False
+bs: 16
+lr: 1.e-4
+epochs: 50
+shuffle: True
+augment: False
+
+save_model_interval: 1000
+tb_log_interval: 100
+imsize: [240, 320]
+loss: 'DenseDepthLoss'
+input_augmentation: 'random_warp_input'
+
+# if you wanna train from scratch, please set off this key: init_train
+sr_checkpoint_path: #'/home/yukisaito/TiltedDepthEstimation/results/sr_only/models/iter_58000.p'
+checkpoint_path: '/home/yukisaito/TiltedDepthEstimation/results/unetvgg_pconv/models/model-best.pkl'
+init_train: True
+
+dataset: 'scannet'
+train_dataset: './data/my_scannet_standard_train_test_val_split.pkl'
+test_dataset: './data/my_scannet_standard_train_test_val_split.pkl'

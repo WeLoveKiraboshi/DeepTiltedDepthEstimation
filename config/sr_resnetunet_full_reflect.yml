@@ -1,0 +1,33 @@
+seed: 1
+mode: 'sr_depth_net'
+network: 'SpatialRectifierResnetUnet'
+pre_train: False
+bs: 16
+lr: 1.e-5
+epochs: 30
+shuffle: True
+augment: False
+
+
+save_model_interval: 5000
+tb_log_interval: 500
+imsize: [240, 320]
+loss: 'SRDenseDepthFullLoss'
+input_augmentation: 'no_warp'
+image_padding_mode: 'reflection' #'border' #'reflection'
+
+# if you wanna train from scratch, please set off this key: init_train
+sr_checkpoint_path: '/home/yukisaito/TiltedDepthEstimation/results/sr_only_no_warp/models/iter_12000_full2dofa.pkl'
+checkpoint_path: '/home/yukisaito/TiltedDepthEstimation/results/resnetunet_warp/models/iter_150000.pkl'
+init_train: False
+start_epochs: 0
+full_checkpoint_path: '/home/yukisaito/TiltedDepthEstimation/results/sr_resnetunet_full_reflection/models/model-best-scannet_full_standard_pitch:1.0_20220702_Ours.pkl'
+
+#model-best_standard.pkl'
+
+#model-best-scannet_full_standard_roll:1.0_20220702_Ours.pkl'
+
+
+dataset: 'scannet' #'TUMrgbd_frei1rpy'
+train_dataset: './data/my_scannet_standard_train_test_val_split.pkl'
+test_dataset: './data/my_scannet_standard_train_test_val_split.pkl' 

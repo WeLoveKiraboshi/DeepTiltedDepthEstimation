@@ -1,0 +1,26 @@
+seed: 1
+mode: 'sr_only'
+network: 'SpatialRectifier'
+pre_train: False
+bs: 256
+lr: 1.e-4
+epochs: 50
+shuffle: True
+augment: False
+
+save_model_interval: 500
+tb_log_interval: 200
+imsize: [240, 320]
+loss: 'SRLoss'
+input_augmentation: 'random_warp_input'
+
+# if you wanna train from scratch, please set off this key: init_train
+sr_checkpoint_path: '/home/yukisaito/TiltedDepthEstimation/results/sr_only/models/model-best_standard.pkl'
+checkpoint_path:
+start_epochs: 0
+init_train: True
+
+dataset: 'scannet' #'TUMrgbd_frei1rpy'
+train_dataset: './data/my_scannet_standard_train_test_val_split.pkl'
+test_dataset: './data/my_scannet_standard_train_test_val_split.pkl'
+#./data/my_full_2dofa_scannet.pkl' #

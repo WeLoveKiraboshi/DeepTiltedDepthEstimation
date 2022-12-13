@@ -1,0 +1,301 @@
+import torch.nn as nn
+import torch.nn.functional as F
+import torch
+import torchvision
+import os
+
+import numpy as np
+import pickle
+from models.warping_2dof_alignment import Warping2DOFAlignment
+
+def conv3x3(in_planes, out_planes, stride=1):
+    """3x3 conv layer with padding."""
+    return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False)
+
+class Bottleneck(nn.Module):
+    expansion = 4
+
+    def __init__(self, inplanes, planes, stride=1, downsample=None):
+        super(Bottleneck, self).__init__()
+        self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(planes)
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(planes)
+        self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
+        self.bn3 = nn.BatchNorm2d(planes * 4)
+        self.relu = nn.ReLU(inplace=True)
+        self.downsample = downsample
+        self.stride = stride
+
+    def forward(self, x):
+        residual = x
+
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+        out = self.relu(out)
+
+        out = self.conv3(out)
+        out = self.bn3(out)
+
+        if self.downsample is not None:
+            residual = self.downsample(x)
+
+        out += residual
+        out = self.relu(out)
+
+        return out
+
+def get_incoming_shape(incoming):
+    size = incoming.size()
+    # returns the incoming data shape as a list
+    return [size[0], size[1], size[2], size[3]]
+
+def interleave(tensors, axis):
+    # change the first element (batch_size to -1)
+    old_shape = get_incoming_shape(tensors[0])[1:]
+    new_shape = [-1] + old_shape
+
+    # double 1 dimension
+    new_shape[axis] *= len(tensors)
+
+    # pack the tensors on top of each other
+    stacked = torch.stack(tensors, axis+1)
+
+    # reshape and return
+    reshaped = stacked.view(new_shape)
+    return reshaped
+
+class UnpoolingAsConvolution(nn.Module):
+    def __init__(self, inplanes, planes):
+        super(UnpoolingAsConvolution, self).__init__()
+
+        # interleaving convolutions
+        self.conv_A = nn.Conv2d(in_channels=inplanes, out_channels=planes, kernel_size=(3, 3), stride=1, padding=1)
+        self.conv_B = nn.Conv2d(in_channels=inplanes, out_channels=planes, kernel_size=(2, 3), stride=1, padding=0)
+        self.conv_C = nn.Conv2d(in_channels=inplanes, out_channels=planes, kernel_size=(3, 2), stride=1, padding=0)
+        self.conv_D = nn.Conv2d(in_channels=inplanes, out_channels=planes, kernel_size=(2, 2), stride=1, padding=0)
+
+    def forward(self, x):
+        output_a = self.conv_A(x)
+
+        padded_b = nn.functional.pad(x, (1, 1, 0, 1))
+        output_b = self.conv_B(padded_b)
+
+        padded_c = nn.functional.pad(x, (0, 1, 1, 1))
+        output_c = self.conv_C(padded_c)
+
+        padded_d = nn.functional.pad(x, (0, 1, 0, 1))
+        output_d = self.conv_D(padded_d)
+
+        left = interleave([output_a, output_b], axis=2)
+        right = interleave([output_c, output_d], axis=2)
+        y = interleave([left, right], axis=3)
+        return y
+
+class UpProjection(nn.Module):
+    def __init__(self, inplanes, planes):
+        super(UpProjection, self).__init__()
+
+        self.unpool_main = UnpoolingAsConvolution(inplanes, planes)
+        self.unpool_res = UnpoolingAsConvolution(inplanes, planes)
+
+        self.main_branch = nn.Sequential(
+            self.unpool_main,
+            nn.BatchNorm2d(planes),
+            nn.ReLU(inplace=False),
+            nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(planes)
+        )
+
+        self.residual_branch = nn.Sequential(
+            self.unpool_res,
+            nn.BatchNorm2d(planes),
+        )
+
+        self.relu = nn.ReLU(inplace=False)
+
+    def forward(self, input_data):
+        x = self.main_branch(input_data)
+        res = self.residual_branch(input_data)
+        x += res
+        x = self.relu(x)
+        return x
+
+class ConConv(nn.Module):
+    def __init__(self, inplanes_x1, inplanes_x2, planes):
+        super(ConConv, self).__init__()
+        self.conv = nn.Conv2d(inplanes_x1 + inplanes_x2, planes, kernel_size=1, bias=True)
+
+    def forward(self, x1, x2):
+        x1 = torch.cat([x2, x1], dim=1)
+        x1 = self.conv(x1)
+        return x1
+
+class ResnetUnetHybrid(nn.Module):
+    def __init__(self, block=Bottleneck, layers=[3, 4, 6, 3], pretrained=False):
+        self.inplanes = 64
+
+        # resnet layers
+        super(ResnetUnetHybrid, self).__init__()
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.bn1 = nn.BatchNorm2d(64)
+        self.relu = nn.ReLU(inplace=True)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+
+        self.layer1 = self._make_layer(block, 64, layers[0])
+        self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
+        self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
+        self.layer4 = self._make_layer(block, 512, layers[3], stride=1)
+
+        # additional up projection layers parts
+        self.conv2 = nn.Conv2d(2048, 1024, 1, bias=True)
+        self.bn2 = nn.BatchNorm2d(1024)
+
+        self.up_proj1 = UpProjection(1024, 512)
+        self.up_proj2 = UpProjection(512, 256)
+        self.up_proj3 = UpProjection(256, 128)
+        self.up_proj4 = UpProjection(128, 64)
+
+        self.drop = nn.Dropout(0.5, False)
+        self.deconv3 = nn.ConvTranspose2d(64, 1, kernel_size=3, stride=2, padding=1, output_padding=1, bias=True)
+
+        # padding + concat for unet stuff
+        # self.con_conv1 = ConConv(1024, 512, 512)
+        # self.con_conv2 = ConConv(512, 256, 256)
+        # self.con_conv3 = ConConv(256, 128, 128)
+        # self.con_conv4 = ConConv(64, 64, 64)
+
+        self.con_conv1 = ConConv(1024, 1024, 512)
+        self.con_conv2 = ConConv(512, 256, 256)
+        self.con_conv3 = ConConv(256, 128, 128)
+        self.con_conv4 = ConConv(64, 64, 1)
+
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.normal_(m.weight, 0, 0.01)
+
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+
+        self.network_name = 'ResnetUnetHybrid'
+        if pretrained:
+            self.load_weight_resnet50()
+
+    def _make_layer(self, block, planes, blocks, stride=1):
+        downsample = None
+        if stride != 1 or self.inplanes != planes * block.expansion:
+            downsample = nn.Sequential(
+                nn.Conv2d(self.inplanes, planes * block.expansion,
+                          kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(planes * block.expansion),
+            )
+
+        layers = list()
+        layers.append(block(self.inplanes, planes, stride, downsample))
+        self.inplanes = planes * block.expansion
+        for i in range(1, blocks):
+            layers.append(block(self.inplanes, planes))
+
+        return nn.Sequential(*layers)
+
+    def forward(self, x):
+        # return self.resnet50(x)
+
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x_to_conv4 = self.relu(x) #orch.Size([64, 64, 120, 160])
+
+        x = self.maxpool(x_to_conv4)         #torch.Size([64, 64, 60, 80])
+        x_to_conv3 = self.layer1(x)          #torch.Size([64, 256, 60, 80])
+        x_to_conv2 = self.layer2(x_to_conv3) #torch.Size([64, 512, 30, 40])
+        x_to_conv1 = self.layer3(x_to_conv2) #torch.Size([64, 1024, 15, 20])
+
+        x = self.layer4(x_to_conv1) #torch.Size([64, 2048, 15, 20])
+
+        # additional layers
+        x = self.conv2(x)                 #torch.Size([64, 1024, 15, 20])
+        x = self.bn2(x)                   #torch.Size([64, 1024, 15, 20]
+
+        # # up project part
+        #x = self.up_proj1(x) #
+        x = self.con_conv1(x, x_to_conv1)
+
+        x = self.up_proj2(x)
+        x = self.con_conv2(x, x_to_conv2)
+
+        x = self.up_proj3(x)
+        x = self.con_conv3(x, x_to_conv3)
+
+        x = self.up_proj4(x)
+        x = self.con_conv4(x, x_to_conv4)
+
+        #x = self.drop(x)
+        #x = self.deconv3(x)
+        #x = self.relu(x)
+        x = F.interpolate(x, scale_factor=2, mode='nearest')
+
+        return x
+
+
+    def load_weight_resnet50(self):
+        resnet50 = torchvision.models.resnet50(pretrained=True)
+        own_state = self.state_dict()
+        for name, param in resnet50.state_dict().items():
+            if name not in own_state:
+                #print('layer not exist... {} {}'.format(name, param.shape)) # fc.weight & fc.bs
+                continue
+            else:
+                #print('load weight... {}'.format(name))
+                if isinstance(param, torch.nn.parameter.Parameter):
+                    param = param.data
+                own_state[name].copy_(param)
+        print('loaded resnet-50 pretrained weight in {}'.format(self.network_name))
+        return self
+
+
+class IMUResnetUnetHybrid(nn.Module):
+    def __init__(self, K=np.eye(3), depth_estimation_cnn_ckpt=None, mode='train'):
+        super(IMUResnetUnetHybrid, self).__init__()
+        self.depth_estimation_cnn = ResnetUnetHybrid(pretrained=False)
+        self.K = K
+        self.H = 240
+        self.W = 320
+        self.mode = mode
+        self.warp_2dof_alignment = Warping2DOFAlignment(fx=K[0,0], fy=K[1,1], cx=K[0,2], cy=K[1,2])
+        print('fx={},  fy={},  cx={},  cy={}'.format(K[0,0],K[1,1],K[0,2],K[1,2]))
+
+        if depth_estimation_cnn_ckpt != None:
+            model_depthnet_cp = pickle.load(open(depth_estimation_cnn_ckpt, "rb"))
+            self.depth_estimation_cnn.load_state_dict(model_depthnet_cp['depth_net'], strict=False)
+            print('loading DepthCNN checkpoint...{}'.format(depth_estimation_cnn_ckpt))
+    def forward(self, sample_batched):
+        x = sample_batched['image']
+        # Step 1: Construct warping parameters
+        I_g = sample_batched['gravity']
+        I_a = torch.nn.functional.normalize(sample_batched['aligned_directions'], dim=1, eps=1e-6)
+
+        # Step 2: Construct image sampler forward and inverse
+        if 'corners_points' in sample_batched.keys():
+            original_corner_pts = sample_batched['corners_points']#[bs, 2, 4]
+        else:
+            #original_corner_pts = np.array([[0, 0, 1], [self.W - 1, 0, 1], [0, self.H - 1, 1], [self.W - 1, self.H - 1, 1]]).transpose() #[bs, 2, 4]
+            original_corner_pts = torch.Tensor(np.array([[0, 0], [self.W - 1, 0], [0, self.H - 1], [self.W - 1, self.H - 1]]).transpose()).unsqueeze(0).repeat(I_g.shape[0], 1, 1).cuda()
+        R_inv, img_sampler, inv_img_sampler = self.warp_2dof_alignment.image_sampler_forward_inverse(I_g.detach(), I_a.detach(), original_corner_pts)
+        #self.affine_rotate(sample_batched['image'], R_inv)
+
+        # Step 3: Warp input to be canonical, ==> pose rectified image
+        w_x = torch.nn.functional.grid_sample(x, img_sampler, padding_mode='zeros', mode='bilinear')
+
+        # Step 4: Depth prediction
+        w_y = self.depth_estimation_cnn(w_x) #if we change w_x => x, loss converged
+
+        # Step 5: Inverse warp the output to be pixel wise with input
+        y = torch.nn.functional.grid_sample(w_y, inv_img_sampler, padding_mode='zeros', mode='bilinear')
+        # #since output is depth(ch=1), axis:1 must be dim=1
+        y = y.view(x.shape[0], 1, x.shape[2], x.shape[3])
+        return {'I_g': I_g, 'I_a': I_a, 'pred_depth': y, 'W_I': w_x, 'W_O': w_y}

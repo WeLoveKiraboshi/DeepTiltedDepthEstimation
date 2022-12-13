@@ -11,9 +11,9 @@ alt="TeaserVideo" width="789" height="198" border="0" /></a>
 
 ### Related Publications:
 
-[Our paper3] Yuki Saito, Hideo Saito，Vincent Fremont, **Monocular Depth Estimation for Tilted Images via Gravity Rectifier**，第25回画像の認識・理解シンポジウム(Miru2022)，2022年7月26日発表済． ** [site](https://sites.google.com/view/miru2022)**
+[Our paper1] Yuki Saito, Hideo Saito，Vincent Fremont, **Monocular Depth Estimation for Tilted Images via Gravity Rectifier**，第25回画像の認識・理解シンポジウム(Miru2022)，2022年7月26日発表済． ** [site](https://sites.google.com/view/miru2022)**
 
-[Our Paper2] 
+[Our Paper2] Yuki Saito, Hideo Saito，Vincent Fremont, **Monocular Depth Estimation for Tilted Images via Gravity Rectifier**，18th International Joint Conference on Computer Vision, Imaging and Computer Graphics Theory and Applications.(VISSAP2023)，TBD． ** [site](https://visapp.scitevents.org/)**
 
 # 1. License
 
@@ -25,7 +25,7 @@ If you use our scripts  in an academic work, please cite:
       journal={},
       pages={},
       publisher={},
-      year={2022}
+      year={2023}
      }
 
 # 2. Prerequisites
@@ -46,6 +46,8 @@ You can tune the training parameter in config/XXX.yml files (e.g.: batch_size, e
   ```
   $ ./train.sh
   ```
+
+For further information about our pretrained model, train/test split, please contact us: yusa19971015@keio.jp
 
 ## Testing
 
@@ -73,6 +75,13 @@ There is several optional parameters for evaluation in command line.
     --time: evaluate inference time
   ```
   
+  ## Our Dataset
+
+  our evaluation datasets captured with Kinect Azure at various indoor scenes are available on following links : [links](https://drive.google.com/drive/folders/153X-VugR4VTBzDnsx8H6zsXSmroydJ6o?usp=sharing)
+  <a href="http://hvrl.ics.keio.ac.jp/saito_y/images/TiltedDepthEstimation/OurDataset_all_sequences.png" target="_blank"><img src="http://hvrl.ics.keio.ac.jp/saito_y/images/TiltedDepthEstimation/Qualitative_OurDataset_OurBaselines_v3-1.png"
+alt="OurBaseline" width="617" height="306" border="0" /></a>
+
+
 # 4. Demo Results
 
 ## Monocular Depth Estimation Module
@@ -86,4 +95,4 @@ alt="OtherBaseline" width="965" height="400" border="0" /></a>
 
 ## Extension to SLAM applications
 <a href="http://hvrl.ics.keio.ac.jp/saito_y/images/TiltedDepthEstimation/Extension_to_SLAM.png" target="_blank"><img src="http://hvrl.ics.keio.ac.jp/saito_y/images/TiltedDepthEstimation/Extension_to_SLAM.png"
-alt="SLAM-Demo" width="1024" height="380" border="0" /></a>
+alt="SLAM-Demo" width="1024" height="360" border="0" /></a>

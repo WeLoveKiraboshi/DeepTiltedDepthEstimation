@@ -78,7 +78,7 @@ There is several optional parameters for evaluation in command line.
   ## Our Dataset
 
   our evaluation datasets captured with Kinect Azure at various indoor scenes are available on following links : [links](https://drive.google.com/drive/folders/153X-VugR4VTBzDnsx8H6zsXSmroydJ6o?usp=sharing)
-  <a href="http://hvrl.ics.keio.ac.jp/saito_y/images/TiltedDepthEstimation/OurDataset_all_sequences.png" target="_blank"><img src="http://hvrl.ics.keio.ac.jp/saito_y/images/TiltedDepthEstimation/Qualitative_OurDataset_OurBaselines_v3-1.png"
+  <a href="http://hvrl.ics.keio.ac.jp/saito_y/images/TiltedDepthEstimation/OurDataset_all_sequences.png" target="_blank"><img src="http://hvrl.ics.keio.ac.jp/saito_y/images/TiltedDepthEstimation/OurDataset_all_sequences.png"
 alt="OurBaseline" width="617" height="306" border="0" /></a>
 
 

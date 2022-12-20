@@ -74,11 +74,7 @@ There is several optional parameters for evaluation in command line.
 
     --time: evaluate inference time
   ```
-  
-  ## Our Dataset
-
-  our evaluation datasets captured with Kinect Azure at various indoor scenes are available soon.
-
+ 
 
 # 4. Demo Results
 
